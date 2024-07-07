@@ -53,11 +53,18 @@ rows = table.find_elements(By.TAG_NAME, 'tr')
 data = []
 for row in rows:
     cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
-    data.append([col.text for col in cols])
-
+    row_data = []
+    for col in cols:
+        # Check links
+        link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
+        if link:
+            row_data.append(link.get_attribute('href'))
+        else:
+            row_data.append(col.text)
+    data.append(row_data)
 
 df = pd.DataFrame(data[1:], columns=data[0])
-df.to_excel('./court_cases.xlsx', index=False)
+df.to_excel('./court_cases_with_pdf_links.xlsx', index=False)
 
-time.sleep(10)
+time.sleep(5)
 driver.quit()
