@@ -54,14 +54,16 @@ data = []
 for row in rows:
     cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
     row_data = []
+    has_link = False
     for col in cols:
-        # Check links
         link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
         if link:
             row_data.append(link.get_attribute('href'))
+            has_link = True
         else:
             row_data.append(col.text)
-    data.append(row_data)
+    if has_link:
+        data.append(row_data)
 
 df = pd.DataFrame(data[1:], columns=data[0])
 df.to_excel('./Case_details.xlsx', index=False)
