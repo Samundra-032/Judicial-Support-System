@@ -64,7 +64,7 @@ for row in rows:
     data.append(row_data)
 
 df = pd.DataFrame(data[1:], columns=data[0])
-df.to_excel('./court_cases_with_pdf_links.xlsx', index=False)
+df.to_excel('./Case_details.xlsx', index=False)
 
 time.sleep(5)
 driver.quit()
