@@ -1,88 +1,88 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.common.exceptions import TimeoutException
-from selenium.webdriver.common.action_chains import ActionChains
+# from selenium import webdriver
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.chrome.service import Service
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
+# from webdriver_manager.chrome import ChromeDriverManager
+# from selenium.common.exceptions import TimeoutException
+# from selenium.webdriver.common.action_chains import ActionChains
 
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
-import pandas as pd
+# from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+# import pandas as pd
 
-import time
-import os
-# Setup WebDriver
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
-driver.get("https://supremecourt.gov.np/cp/#listTable")
+# import time
+# import os
+# # Setup WebDriver
+# driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+# driver.get("https://supremecourt.gov.np/cp/#listTable")
 
-# wait to load site
-wait = WebDriverWait(driver, 10)
+# # wait to load site
+# wait = WebDriverWait(driver, 10)
 
-# Select  Enter the अदालत 
-court_type = wait.until(EC.element_to_be_clickable((By.NAME, 'court_type')))
-court_type.send_keys('सर्वोच्च अदालत')
+# # Select  Enter the अदालत 
+# court_type = wait.until(EC.element_to_be_clickable((By.NAME, 'court_type')))
+# court_type.send_keys('सर्वोच्च अदालत')
 
-try:
-    popup_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.popup-close-button-css')))  # Adjust the CSS selector as needed
-    popup_close_button.click()
-except TimeoutException:
-    print("Popup did not appear or close button not found.")
+# try:
+#     popup_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.popup-close-button-css')))  # Adjust the CSS selector as needed
+#     popup_close_button.click()
+# except TimeoutException:
+#     print("Popup did not appear or close button not found.")
 
-# Select अदालतको नाम
-court_type = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
-court_type.send_keys('सर्वोच्च अदालत')
+# # Select अदालतको नाम
+# court_type = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
+# court_type.send_keys('सर्वोच्च अदालत')
 
-# Enter the मुद्दा दर्ता मिति
-darta_date = wait.until(EC.element_to_be_clickable((By.NAME, 'darta_date')))
-darta_date.send_keys('2070-01-03')
+# # Enter the मुद्दा दर्ता मिति
+# darta_date = wait.until(EC.element_to_be_clickable((By.NAME, 'darta_date')))
+# darta_date.send_keys('2070-01-03')
 
-#click खोज्नु होस्
-try:
-    submit_button = wait.until(EC.element_to_be_clickable((By.NAME, 'submit')))
-    ActionChains(driver).move_to_element(submit_button).click(submit_button).perform()
-except TimeoutException:
-    print("Timed out waiting for submit button to be clickable.")
-except ElementClickInterceptedException:
-    driver.execute_script("arguments[0].click();", submit_button)
+# #click खोज्नु होस्
+# try:
+#     submit_button = wait.until(EC.element_to_be_clickable((By.NAME, 'submit')))
+#     ActionChains(driver).move_to_element(submit_button).click(submit_button).perform()
+# except TimeoutException:
+#     print("Timed out waiting for submit button to be clickable.")
+# except ElementClickInterceptedException:
+#     driver.execute_script("arguments[0].click();", submit_button)
 
-#start scraping
-time.sleep(20)  
-table = driver.find_element(By.TAG_NAME, 'table')
-rows = table.find_elements(By.TAG_NAME, 'tr')
+# #start scraping
+# time.sleep(20)  
+# table = driver.find_element(By.TAG_NAME, 'table')
+# rows = table.find_elements(By.TAG_NAME, 'tr')
 
-data = []
+# data = []
 
-for i, row in enumerate(rows):
-    cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
-    row_data = []
-    has_link = False
-    for col in cols:
-        link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
-        if link:
-            row_data.append(link.get_attribute('href'))
-            has_link = True
-        else:
-            row_data.append(col.text)
-    if i == 0:
-        header = row_data
-    else:
-        if has_link:
-            data.append(row_data)
+# for i, row in enumerate(rows):
+#     cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
+#     row_data = []
+#     has_link = False
+#     for col in cols:
+#         link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
+#         if link:
+#             row_data.append(link.get_attribute('href'))
+#             has_link = True
+#         else:
+#             row_data.append(col.text)
+#     if i == 0:
+#         header = row_data
+#     else:
+#         if has_link:
+#             data.append(row_data)
 
-df = pd.DataFrame(data[1:], columns=header)
+# df = pd.DataFrame(data[1:], columns=header)
 
-file_path = './court_cases_with_pdf_links.xlsx'
+# file_path = './court_cases_with_pdf_links.xlsx'
 
-if os.path.exists(file_path):
-    # Load existing data
-    ex_df = pd.read_excel(file_path)
-    # Append new data to existing data
-    combined_df = pd.concat([ex_df, df], ignore_index=True)
-else:
-    combined_df = df
+# if os.path.exists(file_path):
+#     # Load existing data
+#     ex_df = pd.read_excel(file_path)
+#     # Append new data to existing data
+#     combined_df = pd.concat([ex_df, df], ignore_index=True)
+# else:
+#     combined_df = df
 
-combined_df.to_excel(file_path, index=False)
+# combined_df.to_excel(file_path, index=False)
 
-time.sleep(5)
-driver.quit()
+# time.sleep(5)
+# driver.quit()
