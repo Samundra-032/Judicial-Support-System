@@ -30,11 +30,11 @@ court_type = wait.until(EC.element_to_be_clickable((By.NAME, 'court_type')))
 court_type.send_keys('सर्वोच्च अदालत')
 
 
-try:
-    popup_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.popup-close-button-css')))
-    popup_close_button.click()
-except TimeoutException:
-    print("Popup did not appear or close button not found.")
+# try:
+#     popup_close_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, '.popup-close-button-css')))
+#     popup_close_button.click()
+# except TimeoutException:
+#     print("Popup did not appear or close button not found.")
 
 
 # Select अदालतको नाम
@@ -44,7 +44,7 @@ court_type.send_keys('सर्वोच्च अदालत')
 
 # Enter the मुद्दा दर्ता मिति
 darta_date = wait.until(EC.element_to_be_clickable((By.NAME, 'darta_date')))
-darta_date.send_keys('2070-01-03')
+darta_date.send_keys('2070-01-02')
 
 
 #click खोज्नु होस्
@@ -94,7 +94,7 @@ for i, row in enumerate(rows):
 df = pd.DataFrame(data[1:], columns=header)
 
 
-file_path = './dataset.xlsx'
+file_path = "./dataset.xlsx"
 
 
 if os.path.exists(file_path):
