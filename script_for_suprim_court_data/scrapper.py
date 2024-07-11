@@ -5,7 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
-from selenium.webdriver.common.action_chains import ActionChains  # Import ActionChains
+from selenium.webdriver.common.action_chains import ActionChains
 
 import pandas as pd
 import time
@@ -19,7 +19,7 @@ chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--ignore-certificate-errors')
 
 # Setup WebDriver
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 driver.get("https://supremecourt.gov.np/cp/#listTable")
 
 # Wait to load site
@@ -33,8 +33,8 @@ court_type.send_keys('सर्वोच्च अदालत')
 court_name = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
 court_name.send_keys('सर्वोच्च अदालत')
 
-start_date = date(2070, 1, 10)
-final_end_date = date(2070, 1, 13)
+start_date = date(2070, 1, 14)
+final_end_date = date(2070, 1, 20)
 
 while start_date <= final_end_date:
     # Convert the Nepali date to a string
@@ -55,43 +55,48 @@ while start_date <= final_end_date:
 
     # Start scraping
     time.sleep(20)
-    table = driver.find_element(By.TAG_NAME, 'table')
-    rows = table.find_elements(By.TAG_NAME, 'tr')
 
-    data = []
+    # Check if the table exists
+    if driver.find_elements(By.TAG_NAME, 'table'):
+        table = driver.find_element(By.TAG_NAME, 'table')
+        rows = table.find_elements(By.TAG_NAME, 'tr')
 
-    for i, row in enumerate(rows):
-        cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
+        data = []
 
-        row_data = []
-        has_link = False
+        for i, row in enumerate(rows):
+            cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
 
-        for col in cols:
-            link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
+            row_data = []
+            has_link = False
 
-            if link:
-                row_data.append(link.get_attribute('href'))
-                has_link = True
+            for col in cols:
+                link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
+
+                if link:
+                    row_data.append(link.get_attribute('href'))
+                    has_link = True
+                else:
+                    row_data.append(col.text)
+
+            if i == 0:
+                header = row_data
             else:
-                row_data.append(col.text)
+                if has_link:
+                    data.append(row_data)
 
-        if i == 0:
-            header = row_data
+        df = pd.DataFrame(data[1:], columns=header) 
+
+        file_path = "./courtdata.xlsx"
+
+        if os.path.exists(file_path):
+            ex_df = pd.read_excel(file_path)
+            combined_df = pd.concat([ex_df, df], ignore_index=True)
         else:
-            if has_link:
-                data.append(row_data)
-
-    df = pd.DataFrame(data[1:], columns=header)
-
-    file_path = "./courtdata.xlsx"
-
-    if os.path.exists(file_path):
-        ex_df = pd.read_excel(file_path)
-        combined_df = pd.concat([ex_df, df], ignore_index=True)
+            combined_df = df
+        combined_df.to_excel(file_path, index=False)
     else:
-        combined_df = df
-    combined_df.to_excel(file_path, index=False)
-
+        print(f"No table found for date {darta_date_str}. Skipping to next date.")
+        
     start_date += timedelta(days=1)
 
 time.sleep(5)
