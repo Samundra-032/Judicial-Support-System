@@ -15,6 +15,9 @@ import pandas as pd
 import time
 import os
 
+# ignoring the SSL errors if occurs
+chrome_options = webdriver.ChromeOptions()
+chrome_options.add_argument('--ignore-certificate-errors')
 
 # Setup WebDriver
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
@@ -44,7 +47,7 @@ court_type.send_keys('सर्वोच्च अदालत')
 
 # Enter the मुद्दा दर्ता मिति
 darta_date = wait.until(EC.element_to_be_clickable((By.NAME, 'darta_date')))
-darta_date.send_keys('2070-01-02')
+darta_date.send_keys('2070-01-16')
 
 
 #click खोज्नु होस्
