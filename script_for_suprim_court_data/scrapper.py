@@ -33,8 +33,8 @@ court_type.send_keys('सर्वोच्च अदालत')
 court_name = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
 court_name.send_keys('सर्वोच्च अदालत')
 
-start_date = date(2070, 2, 31)
-final_end_date = date(2070, 3, 30)
+start_date = date(2070, 3, 21)
+final_end_date = date(2070, 3, 31)
 
 while start_date <= final_end_date:
     # Convert the Nepali date to a string
@@ -53,50 +53,50 @@ while start_date <= final_end_date:
     except ElementClickInterceptedException:
         driver.execute_script("arguments[0].click();", submit_button)
 
-    # Start scraping
-    time.sleep(20)
+    # Wait until the table is present and rows are loaded
+    try:
+        table = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'table')))
+        rows = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))
+    except TimeoutException:
+        print(f"Table not found for date {darta_date_str}. Skipping to next date.")
+        start_date += timedelta(days=1)
+        continue
 
-    # Check if the table exists
-    if driver.find_elements(By.TAG_NAME, 'table'):
-        table = driver.find_element(By.TAG_NAME, 'table')
-        rows = table.find_elements(By.TAG_NAME, 'tr')
+    data = []
 
-        data = []
+    for i, row in enumerate(rows):
+        cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
 
-        for i, row in enumerate(rows):
-            cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
+        row_data = []
+        has_link = False
 
-            row_data = []
-            has_link = False
+        for col in cols:
+            link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
 
-            for col in cols:
-                link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
-
-                if link:
-                    row_data.append(link.get_attribute('href'))
-                    has_link = True
-                else:
-                    row_data.append(col.text)
-
-            if i == 0:
-                header = row_data
+            if link:
+                row_data.append(link.get_attribute('href'))
+                has_link = True
             else:
-                if has_link:
-                    data.append(row_data)
+                row_data.append(col.text)
 
-        df = pd.DataFrame(data[1:], columns=header) 
-
-        file_path = "./courtdata.xlsx"
-
-        if os.path.exists(file_path):
-            ex_df = pd.read_excel(file_path)
-            combined_df = pd.concat([ex_df, df], ignore_index=True)
+        if i == 0:
+            header = row_data
         else:
-            combined_df = df
-        combined_df.to_excel(file_path, index=False)
+            if has_link:
+                data.append(row_data)
+
+    df = pd.DataFrame(data, columns=header) 
+
+    file_path = "./courtdata.xlsx"
+
+    if os.path.exists(file_path):
+        ex_df = pd.read_excel(file_path)
+        combined_df = pd.concat([ex_df, df], ignore_index=True)
     else:
-        print(f"No table found for date {darta_date_str}. Skipping to next date.")
-        
+        combined_df = df
+    combined_df.to_excel(file_path, index=False)
+
+    print(f"Data for date {darta_date_str} scraped successfully.")
     start_date += timedelta(days=1)
 
 time.sleep(5)
