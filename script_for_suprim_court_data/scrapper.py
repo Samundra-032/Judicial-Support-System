@@ -33,8 +33,8 @@ court_type.send_keys('सर्वोच्च अदालत')
 court_name = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
 court_name.send_keys('सर्वोच्च अदालत')
 
-start_date = date(2070, 1, 14)
-final_end_date = date(2070, 1, 20)
+start_date = date(2070, 2, 31)
+final_end_date = date(2070, 3, 30)
 
 while start_date <= final_end_date:
     # Convert the Nepali date to a string
