@@ -3,9 +3,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from webdriver_manager.chrome import ChromeDriverManager
 
 import pandas as pd
 import time
@@ -14,7 +15,7 @@ import os
 from nepali_datetime import date
 from datetime import timedelta
 
-# Ignoring SSL errors if they occur
+# Setup Chrome options
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--ignore-certificate-errors')
 
@@ -33,12 +34,12 @@ court_type.send_keys('सर्वोच्च अदालत')
 court_name = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
 court_name.send_keys('सर्वोच्च अदालत')
 
-start_date = date(2070, 3, 21)
-final_end_date = date(2070, 3, 31)
+start_date = date(2070, 5, 15)
+final_end_date = date(2070, 5, 30)
 
 while start_date <= final_end_date:
     # Convert the Nepali date to a string
-    darta_date_str = start_date.strftime('%Y-%m-%d')
+    darta_date_str = start_date.strftime('%Y-%m-%d') 
     
     darta_date = wait.until(EC.element_to_be_clickable((By.NAME, 'darta_date')))
     darta_date.clear()
@@ -56,7 +57,21 @@ while start_date <= final_end_date:
     # Wait until the table is present and rows are loaded
     try:
         table = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'table')))
-        rows = wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))
+        rows = table.find_elements(By.TAG_NAME, 'tr')
+        
+        # Scroll to the bottom to load all rows
+        while True:
+            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.END)
+            time.sleep(1)  # Wait for rows to load
+            
+            new_rows = table.find_elements(By.TAG_NAME, 'tr')
+            if len(new_rows) == len(rows):
+                break
+            rows = new_rows
+        
+        # Additional wait to ensure all rows are loaded
+        time.sleep(2)
+        rows = table.find_elements(By.TAG_NAME, 'tr')
     except TimeoutException:
         print(f"Table not found for date {darta_date_str}. Skipping to next date.")
         start_date += timedelta(days=1)
