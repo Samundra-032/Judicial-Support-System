@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException
+from selenium.common.exceptions import TimeoutException, ElementClickInterceptedException, StaleElementReferenceException
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
@@ -15,16 +15,16 @@ import os
 from nepali_datetime import date
 from datetime import timedelta
 
-# Setup Chrome options
+# Setting upp Chrome option
 chrome_options = webdriver.ChromeOptions()
 chrome_options.add_argument('--ignore-certificate-errors')
 
-# Setup WebDriver
+# Web Driver
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 driver.get("https://supremecourt.gov.np/cp/#listTable")
 
-# Wait to load site
-wait = WebDriverWait(driver, 10)
+# Load Site
+wait = WebDriverWait(driver, 20)  
 
 # Select Enter the अदालत
 court_type = wait.until(EC.element_to_be_clickable((By.NAME, 'court_type')))
@@ -34,11 +34,12 @@ court_type.send_keys('सर्वोच्च अदालत')
 court_name = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
 court_name.send_keys('सर्वोच्च अदालत')
 
-start_date = date(2070, 5, 15)
-final_end_date = date(2070, 5, 30)
+# Dates
+start_date = date(2071, 3, 1)
+final_end_date = date(2071, 3, 3)
+
 
 while start_date <= final_end_date:
-    # Convert the Nepali date to a string
     darta_date_str = start_date.strftime('%Y-%m-%d') 
     
     darta_date = wait.until(EC.element_to_be_clickable((By.NAME, 'darta_date')))
@@ -54,23 +55,24 @@ while start_date <= final_end_date:
     except ElementClickInterceptedException:
         driver.execute_script("arguments[0].click();", submit_button)
 
-    # Wait until the table is present and rows are loaded
+    # Wait to load table  and scroll all the way  down,
     try:
         table = wait.until(EC.presence_of_element_located((By.TAG_NAME, 'table')))
-        rows = table.find_elements(By.TAG_NAME, 'tr')
-        
-        # Scroll to the bottom to load all rows
+        last_height = driver.execute_script("return document.body.scrollHeight")
+
         while True:
-            driver.find_element(By.TAG_NAME, 'body').send_keys(Keys.END)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(1)  # Wait for rows to load
-            
-            new_rows = table.find_elements(By.TAG_NAME, 'tr')
-            if len(new_rows) == len(rows):
+            new_height = driver.execute_script("return document.body.scrollHeight")
+            if new_height == last_height:
                 break
-            rows = new_rows
+            last_height = new_height
         
-        # Additional wait to ensure all rows are loaded
+        # Not Required
         time.sleep(2)
+        
+        
+        #find table rows
         rows = table.find_elements(By.TAG_NAME, 'tr')
     except TimeoutException:
         print(f"Table not found for date {darta_date_str}. Skipping to next date.")
@@ -80,25 +82,28 @@ while start_date <= final_end_date:
     data = []
 
     for i, row in enumerate(rows):
-        cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
+        try:
+            cols = row.find_elements(By.TAG_NAME, 'td') if row.find_elements(By.TAG_NAME, 'td') else row.find_elements(By.TAG_NAME, 'th')
 
-        row_data = []
-        has_link = False
+            row_data = []
+            has_link = False
 
-        for col in cols:
-            link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
+            for col in cols:
+                link = col.find_element(By.TAG_NAME, 'a') if col.find_elements(By.TAG_NAME, 'a') else None
 
-            if link:
-                row_data.append(link.get_attribute('href'))
-                has_link = True
+                if link:
+                    row_data.append(link.get_attribute('href'))
+                    has_link = True
+                else:
+                    row_data.append(col.text)
+
+            if i == 0:
+                header = row_data
             else:
-                row_data.append(col.text)
-
-        if i == 0:
-            header = row_data
-        else:
-            if has_link:
-                data.append(row_data)
+                if has_link:
+                    data.append(row_data)
+        except StaleElementReferenceException:
+            print("Stale element encountered, retrying row.")
 
     df = pd.DataFrame(data, columns=header) 
 
