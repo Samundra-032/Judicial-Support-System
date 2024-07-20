@@ -35,8 +35,8 @@ court_name = wait.until(EC.element_to_be_clickable((By.NAME, 'court_id')))
 court_name.send_keys('सर्वोच्च अदालत')
 
 # Dates
-start_date = date(2071, 3, 1)
-final_end_date = date(2071, 3, 3)
+start_date = date(2071, 4, 3)
+final_end_date = date(2071, 5, 30)
 
 
 while start_date <= final_end_date:
