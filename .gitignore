@@ -2,4 +2,9 @@ documents/
 najir_scarp/
 pdf scrap script/
 .env/
+downloaded_pdfs/
+extract.ipynb
+new_pdf_files/
+output.txt
+testerract/
 
