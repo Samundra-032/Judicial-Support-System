@@ -7,7 +7,7 @@ def create_folder(folder_name, base_path=None):
     if base_path is None:
         base_path = os.getcwd()  
     folder_path = os.path.join(base_path, folder_name)
-    os.makedirs(folder_path, exist_ok=True)  
+    os.makedirs(folder_path, exist_ok=True) 
     return folder_path
 
 def valid_url(url):

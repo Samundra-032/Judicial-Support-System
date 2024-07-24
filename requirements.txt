@@ -3,4 +3,3 @@ beautifulsoup4==4.11.1
 PyPDF2==3.0.1
 pandas==2.2.2
 selenium==4.22.0
-
