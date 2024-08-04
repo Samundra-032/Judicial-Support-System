@@ -8,7 +8,7 @@ import pandas as pd
 import certifi
 
 # Set the path to your Tesseract-OCR executable
-pytesseract.pytesseract.tesseract_cmd = '/usr/bin/tesseract'  # Update this path as necessary
+pytesseract.pytesseract.tesseract_cmd = '/usr/local/bin/tesseract'  # Update this path as necessary
 
 # Directory to store downloaded PDFs
 pdf_directory = 'pdfs'
